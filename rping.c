@@ -26,6 +26,7 @@
 #define NS_PER_US	1000
 #define NS_PER_SEC	1000000000.
 #define MAX_BINS	((MAX_US * NS_PER_US)/NS_PER_BIN)
+#define PERCENTILE_BINS 8
 
 
 static unsigned int delay_us    = 1;
@@ -52,6 +53,10 @@ dump_hist(void)
 	unsigned int i, ns;
 	uint64_t count, sum;
 
+	unsigned int percentile_i;
+	static const double percentile_bin[PERCENTILE_BINS] = { 25, 50, 75, 90, 99, 99.9, 99.99, 99.999 };
+	unsigned int percentile_val[PERCENTILE_BINS] = {0};
+
 	sum = 0;
 	count = 0;
 	for (i = 0, ns = 0; i < MAX_BINS; i++, ns += NS_PER_BIN) {
@@ -63,6 +68,7 @@ dump_hist(void)
 	printf("Average:\t%.1fns\n", (double) sum / count);
 
 	sum = 0;
+	percentile_i = 0;
 	printf("Ns\tCount\tRatio\tPercent\n");
 	for (i = 0, ns = 0; i < MAX_BINS; i++, ns += NS_PER_BIN) {
 		uint64_t x = hits[i];
@@ -75,9 +81,20 @@ dump_hist(void)
 		sum += hits[i];
 		p = (100. * sum) / count;
 
+		if (percentile_i < PERCENTILE_BINS && p >= percentile_bin[percentile_i]) {
+			percentile_val[percentile_i] = ns;
+			percentile_i++;
+		}
+
 		printf("%u\t%"PRIu64"\t%.1f%%\t%.3f%%\n",
 		       ns, x, r, p);
 	}
+	printf("\n");
+
+	for (i = 0; i < PERCENTILE_BINS; ++i) {
+		printf( "percentile %6.3lf = %u \n", percentile_bin[i], percentile_val[i]);
+	}
+
 	fflush(stdout);
 }
 
