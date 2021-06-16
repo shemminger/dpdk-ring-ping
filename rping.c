@@ -238,13 +238,13 @@ int main(int argc, char **argv)
 	fflush(stdout);
 	alarm(test_length);
 
-	ret = rte_eal_mp_remote_launch(pinger, NULL, SKIP_MASTER);
+	ret = rte_eal_mp_remote_launch(pinger, NULL, SKIP_MAIN);
 	if (ret < 0)
 		rte_exit(EXIT_FAILURE, "Cannot launch cores\n");
 
 	echoer();
 
-	RTE_LCORE_FOREACH_SLAVE(lcore_id)
+	RTE_LCORE_FOREACH_WORKER(lcore_id)
 		rte_eal_wait_lcore(lcore_id);
 
 	dump_hist();
